@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astrologic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060914; --panel:rgba(14,20,46,.78); --ink:#e9eefc; --muted:#93a0c8; --line:#2b3868;
+  --accent:#ffb347; --accent-ink:#1b1204; --glow:#6c7bff; --ok:#5fe3b0; --err:#ff9a9a;
+  --display:"Syne","Trebuchet MS",system-ui,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:400 16px/1.55 var(--body);min-height:100vh;
+  background:radial-gradient(900px 520px at 85% -5%,rgba(108,123,255,.28),transparent 60%),
+             radial-gradient(700px 480px at -10% 40%,rgba(120,60,170,.22),transparent 60%),var(--bg);
+  background-attachment:fixed}
+#stars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#stars .tw{animation:tw 4s ease-in-out infinite alternate}
+@keyframes tw{from{opacity:.25}to{opacity:1}}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:28px 20px 56px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font:700 26px/1 var(--display);letter-spacing:.04em}
+.status{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.demo{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:40px;align-items:center;margin:24px 0 40px}
+.hero h1{font:700 clamp(40px,6.4vw,70px)/1 var(--display);margin:0 0 16px;letter-spacing:-.02em}
+.hero p{margin:0;max-width:42ch;color:var(--muted)}
+.system{width:100%;max-width:440px;justify-self:center}
+.system .path{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:2 6}
+.system .orb{transform-origin:200px 200px;animation:spin linear infinite}
+.o1{animation-duration:24s}.o2{animation-duration:46s}.o3{animation-duration:80s}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.system .orb,#stars .tw{animation:none}}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:24px;align-items:start}
+section.card{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--glow);border-radius:4px;padding:22px;backdrop-filter:blur(6px)}
+h2{font:700 22px/1.2 var(--display);margin:0 0 14px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 15px var(--body);padding:8px 12px;cursor:pointer;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 4px}
+input,textarea{width:100%;font:inherit;color:var(--ink);background:rgba(4,7,20,.7);border:1px solid var(--line);border-radius:4px;padding:9px 11px}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+textarea{resize:vertical;min-height:72px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{margin-top:16px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:4px;font:700 15px var(--body);padding:10px 18px;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line);margin:0;padding:6px 12px;font-weight:600;font-size:14px}
+.msg{min-height:22px;margin:12px 0 0;font-size:14px}
+.msg.err{color:var(--err)} .msg.ok{color:var(--ok)}
+.session{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.session strong{font:700 22px var(--display)}
+.events{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.events li{display:flex;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.events h3{margin:0;font:700 18px/1.2 var(--display)}
+.events p{margin:4px 0 0;color:var(--muted);font-size:15px}
+.empty{color:var(--muted);padding:14px 0}
+.hidden{display:none}
+@media (max-width:820px){.hero,.grid{grid-template-columns:1fr}.hero{gap:20px}}
+</style>
+</head>
+<body>
+<svg id="stars" aria-hidden="true"></svg>
+<div class="wrap">
+  <header>
+    <div class="brand">Astrologic</div>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusText">Conectando…</span></div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Tus eventos, en órbita.</h1>
+      <p>Crea tu cuenta, inicia sesión y guarda los eventos que quieres tener siempre a la vista.</p>
+    </div>
+    <svg class="system" viewBox="0 0 400 400" role="img" aria-label="Sistema solar decorativo" id="system"></svg>
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-cuenta">
+      <h2 id="h-cuenta">Tu cuenta</h2>
+
+      <div id="guest">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tab-login" aria-selected="true" data-tab="login">Iniciar sesión</button>
+          <button role="tab" id="tab-reg" aria-selected="false" data-tab="reg">Crear cuenta</button>
+        </div>
+
+        <form id="f-login" autocomplete="on" novalidate>
+          <label for="l-correo">Correo</label>
+          <input id="l-correo" type="email" autocomplete="email">
+          <label for="l-pass">Contraseña</label>
+          <input id="l-pass" type="password" autocomplete="current-password">
+          <button class="btn" type="submit">Iniciar sesión</button>
+        </form>
+
+        <form id="f-reg" class="hidden" autocomplete="on" novalidate>
+          <label for="r-nombre">Nombre</label>
+          <input id="r-nombre" autocomplete="name">
+          <label for="r-correo">Correo</label>
+          <input id="r-correo" type="email" autocomplete="email">
+          <label for="r-pass">Contraseña</label>
+          <input id="r-pass" type="password" autocomplete="new-password">
+          <button class="btn" type="submit">Crear cuenta</button>
+        </form>
+        <p class="msg" id="authMsg" role="status"></p>
+      </div>
+
+      <div id="logged" class="session hidden">
+        <div><span class="muted">Sesión iniciada como</span><br><strong id="who"></strong></div>
+        <button class="btn ghost" id="logout" type="button">Cerrar sesión</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-ev">
+      <h2 id="h-ev">Eventos</h2>
+      <form id="f-ev" novalidate>
+        <label for="e-nombre">Nombre del evento</label>
+        <input id="e-nombre">
+        <label for="e-desc">Descripción</label>
+        <textarea id="e-desc"></textarea>
+        <button class="btn" type="submit">Guardar evento</button>
+      </form>
+      <p class="msg" id="evMsg" role="status"></p>
+      <ul class="events" id="evList"></ul>
+    </section>
+  </div>
+</div>
+
+<script>
+// ---------- Cielo estrellado y sistema orbital (decorativos) ----------
+(function(){
+  const sky=document.getElementById("stars"); let st="";
+  let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  for(let i=0;i<140;i++){
+    const x=(rnd()*100).toFixed(2), y=(rnd()*100).toFixed(2), r=(rnd()*1.3+.3).toFixed(2), o=(rnd()*.6+.3).toFixed(2);
+    st+=`<circle cx="${x}%" cy="${y}%" r="${r}" fill="#fff" opacity="${o}"${i%9===0?' class="tw" style="animation-delay:-'+(rnd()*4).toFixed(1)+'s"':''}/>`;
+  }
+  sky.innerHTML=st;
+
+  const sys=document.getElementById("system"); let h="";
+  h+='<defs><radialGradient id="sun"><stop offset="0" stop-color="#fff4cf"/><stop offset=".45" stop-color="#ffb347"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>';
+  h+='<radialGradient id="pl"><stop offset="0" stop-color="#a9b4ff"/><stop offset="1" stop-color="#4a56d6"/></radialGradient></defs>';
+  h+='<circle cx="200" cy="200" r="46" fill="url(#sun)"/><circle cx="200" cy="200" r="15" fill="#ffd27a"/>';
+  [[70,"o1"],[120,"o2"],[180,"o3"]].forEach(([r,c])=>{ h+=`<circle class="path" cx="200" cy="200" r="${r}"/>`; });
+  h+='<g class="orb o1"><circle cx="270" cy="200" r="7" fill="url(#pl)"/></g>';
+  h+='<g class="orb o2"><circle cx="200" cy="80" r="11" fill="#5fe3b0"/><circle cx="217" cy="72" r="3" fill="#e9eefc"/></g>';
+  h+='<g class="orb o3"><circle cx="20" cy="200" r="14" fill="#c98cff"/><ellipse cx="20" cy="200" rx="26" ry="6" fill="none" stroke="#e9d4ff" stroke-width="1.5" opacity=".8"/></g>';
+  sys.innerHTML=h;
+})();
+
+// ---------- Capa de API: usa el backend si responde; si no, modo demostración ----------
+const BASE = "";                          // mismo origen que el servidor
+const mock = {                            // réplica en memoria de los endpoints del backend Java
+  usuarios:[], eventos:[], uid:1, eid:1,
+  async req(method, path, body){
+    const j = (x)=>JSON.parse(JSON.stringify(x));
+    if(path==="/usuarios" && method==="POST"){
+      if(this.usuarios.some(u=>u.correo===body.correo)) return {status:409,data:{error:"El correo ya está registrado"}};
+      const u={id:this.uid++,nombre:body.nombre,correo:body.correo,password:body.password};
+      this.usuarios.push(u); return {status:200,data:{id:u.id,nombre:u.nombre,correo:u.correo}};
+    }
+    if(path==="/login" && method==="POST"){
+      const u=this.usuarios.find(x=>x.correo===body.correo && x.password===body.contrasena);
+      return u?{status:200,data:{id:u.id,nombre:u.nombre,correo:u.correo}}:{status:401,data:null};
+    }
+    if(path==="/eventos" && method==="GET") return {status:200,data:j(this.eventos)};
+    if(path==="/eventos" && method==="POST"){
+      const e={id:this.eid++,nombre:body.nombre,descripcion:body.descripcion||""}; this.eventos.push(e); return {status:200,data:j(e)};
+    }
+    const m=path.match(/^\/eventos\/(\d+)$/);
+    if(m && method==="DELETE"){ this.eventos=this.eventos.filter(e=>e.id!==+m[1]); return {status:200,data:null}; }
+    return {status:404,data:null};
+  }
+};
+let live=false;
+async function api(method, path, body){
+  if(live){
+    const r=await fetch(BASE+path,{method,headers:{"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});
+    let data=null; try{ data=await r.json(); }catch(_){}
+    return {status:r.status,data};
+  }
+  return mock.req(method,path,body);
+}
+async function detect(){
+  const dot=document.getElementById("dot"), t=document.getElementById("statusText");
+  try{
+    const r=await fetch(BASE+"/eventos",{signal:AbortSignal.timeout(2500)});
+    if(!r.ok || !(r.headers.get("content-type")||"").includes("json")) throw 0;
+    live=true; dot.className="dot ok"; t.textContent="Conectado a la API";
+  }catch(_){
+    live=false; dot.className="dot demo"; t.textContent="Modo demostración (sin servidor)";
+  }
+}
+
+// ---------- Interfaz ----------
+const $=(id)=>document.getElementById(id);
+let user=null;
+const say=(el,text,type)=>{el.textContent=text;el.className="msg"+(type?" "+type:"");};
+
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  const reg=b.dataset.tab==="reg";
+  $("tab-login").setAttribute("aria-selected",String(!reg)); $("tab-reg").setAttribute("aria-selected",String(reg));
+  $("f-login").classList.toggle("hidden",reg); $("f-reg").classList.toggle("hidden",!reg); say($("authMsg"),"");
+}));
+
+function showSession(){
+  $("guest").classList.toggle("hidden",!!user); $("logged").classList.toggle("hidden",!user);
+  if(user) $("who").textContent=user.nombre;
+}
+
+$("f-reg").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const nombre=$("r-nombre").value.trim(), correo=$("r-correo").value.trim(), password=$("r-pass").value;
+  if(!nombre||!correo||!password) return say($("authMsg"),"Completa nombre, correo y contraseña.","err");
+  const r=await api("POST","/usuarios",{nombre,correo,password});
+  if(r.status===200){ say($("authMsg"),"Cuenta creada. Ya puedes iniciar sesión.","ok"); $("f-reg").reset(); $("tab-login").click(); $("l-correo").value=correo; }
+  else say($("authMsg"),(r.data&&r.data.error)||"No se pudo crear la cuenta.","err");
+});
+
+$("f-login").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const correo=$("l-correo").value.trim(), contrasena=$("l-pass").value;
+  if(!correo||!contrasena) return say($("authMsg"),"Escribe tu correo y contraseña.","err");
+  const r=await api("POST","/login",{correo,contrasena});
+  if(r.status===200){ user=r.data; say($("authMsg"),""); $("f-login").reset(); showSession(); }
+  else say($("authMsg"),"Correo o contraseña incorrectos.","err");
+});
+$("logout").addEventListener("click",()=>{ user=null; showSession(); });
+
+async function loadEvents(){
+  const r=await api("GET","/eventos"); const ul=$("evList"); ul.innerHTML="";
+  const list=(r.data||[]);
+  if(!list.length){ ul.innerHTML='<li class="empty">Aún no hay eventos. Guarda el primero con el formulario.</li>'; return; }
+  list.forEach(ev=>{
+    const li=document.createElement("li");
+    const box=document.createElement("div"), h=document.createElement("h3"), p=document.createElement("p");
+    h.textContent=ev.nombre; p.textContent=ev.descripcion||"Sin descripción"; box.append(h,p);
+    const del=document.createElement("button"); del.className="btn ghost"; del.type="button"; del.textContent="Eliminar";
+    del.addEventListener("click",async()=>{ await api("DELETE","/eventos/"+ev.id); say($("evMsg"),"Evento eliminado.","ok"); loadEvents(); });
+    li.append(box,del); ul.append(li);
+  });
+}
+$("f-ev").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const nombre=$("e-nombre").value.trim(), descripcion=$("e-desc").value.trim();
+  if(!nombre) return say($("evMsg"),"Escribe un nombre para el evento.","err");
+  const r=await api("POST","/eventos",{nombre,descripcion});
+  if(r.status===200){ say($("evMsg"),"Evento guardado.","ok"); $("f-ev").reset(); loadEvents(); }
+  else say($("evMsg"),"No se pudo guardar el evento.","err");
+});
+
+(async()=>{ await detect(); showSession(); loadEvents(); })();
+</script>
+</body>
+</html>
